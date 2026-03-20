@@ -239,7 +239,7 @@ export function useRealtime(lineId: string) {
 
   onMounted(function () {
     fetchTrains();
-    intervalId = setInterval(fetchTrains, 60_000);
+    intervalId = setInterval(fetchTrains, 20_000);
   });
 
   onUnmounted(function () {
