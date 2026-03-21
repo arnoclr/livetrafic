@@ -5,7 +5,7 @@ interface StopCoordinate {
   id: number;
   x: number;
   y: number;
-  direction: string;
+  platform: string;
 }
 
 export function useTrainPositions(
@@ -38,13 +38,13 @@ export function useTrainPositions(
       const width = rawWidth ? parseFloat(rawWidth) : 26;
       const height = rawHeight ? parseFloat(rawHeight) : 26;
 
-      const direction = id.includes(">") ? ">" : "<";
+      const idParts = id.split(":");
 
       extractedStops.push({
-        id: parseInt(id, 10),
+        id: parseInt(idParts.at(0) ?? "0"),
         x: x + width / 2,
         y: y + height / 2,
-        direction,
+        platform: idParts.at(-1) ?? "",
       });
     });
 
@@ -64,9 +64,12 @@ export function useTrainPositions(
     }
   }
 
-  function getStop(id: number, direction: string): StopCoordinate | undefined {
+  function getStop(
+    id: number,
+    platform: string = "1",
+  ): StopCoordinate | undefined {
     return stopsCoordinates.value.find(function (s) {
-      return s.id === id && s.direction === direction;
+      return s.id === id && s.platform === platform;
     });
   }
 
@@ -88,8 +91,8 @@ export function useTrainPositions(
         train.position.toStopId,
       );
 
-      const fromStop = getStop(train.position.fromStopId, direction || ">");
-      const toStop = getStop(train.position.toStopId, direction || ">");
+      const fromStop = getStop(train.position.fromStopId);
+      const toStop = getStop(train.position.toStopId, train.position.platform);
 
       if (!fromStop || !toStop) {
         return null;
@@ -97,7 +100,7 @@ export function useTrainPositions(
 
       return {
         x: calculateBetweenPosition(fromStop, toStop),
-        y: fromStop.y,
+        y: toStop.y,
         direction,
         train,
       };
@@ -109,7 +112,10 @@ export function useTrainPositions(
         train.position.stopId,
       );
 
-      const targetStop = getStop(train.position.stopId, direction || ">");
+      const targetStop = getStop(
+        train.position.stopId,
+        train.position.platform,
+      );
 
       if (!targetStop) {
         return null;

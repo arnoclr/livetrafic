@@ -2,12 +2,14 @@ export interface TrainPositionAtStop {
   status: "atStop";
   stopId: number;
   previousStopId?: number;
+  platform: string;
 }
 
 export interface TrainPositionBetweenStops {
   status: "betweenStops";
   fromStopId: number;
   toStopId: number;
+  platform: string;
 }
 
 export interface Train {

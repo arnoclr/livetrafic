@@ -68,6 +68,10 @@ function determinePosition(
   const now = dayjs();
   const { arrivalTime } = getCallTimes(currentCall);
   const stopId = extractStopId(currentCall.StopPointRef.value);
+  const platform =
+    currentCall.ArrivalPlatformName?.value ||
+    currentCall.DeparturePlatformName?.value ||
+    "";
 
   const isAtStop = arrivalTime
     ? now.isAfter(arrivalTime) || now.isSame(arrivalTime, "minute")
@@ -82,7 +86,8 @@ function determinePosition(
       status: "atStop",
       stopId,
       previousStopId,
-    } as TrainPositionAtStop;
+      platform,
+    } satisfies TrainPositionAtStop;
   }
 
   const fromStopId = history.at(-2);
@@ -92,7 +97,8 @@ function determinePosition(
       status: "betweenStops",
       fromStopId,
       toStopId: stopId,
-    } as TrainPositionBetweenStops;
+      platform,
+    } satisfies TrainPositionBetweenStops;
   }
 
   return {
@@ -128,6 +134,22 @@ function isTrainInFuture(calls: EstimatedCall[]): boolean {
   }
 
   return dayjs().add(10, "minutes").isBefore(startTime);
+}
+
+function isTrainInPast(calls: EstimatedCall[]): boolean {
+  const lastCall = calls.at(-1);
+  if (!lastCall) {
+    return false;
+  }
+
+  const { departureTime, arrivalTime } = getCallTimes(lastCall);
+  const endTime = departureTime || arrivalTime;
+
+  if (!endTime) {
+    return false;
+  }
+
+  return dayjs().subtract(1, "minutes").isAfter(endTime);
 }
 
 function earliestCallFirst(a: EstimatedCall, b: EstimatedCall): number {
@@ -178,7 +200,7 @@ function extractTrainsData(
 
       currentTrainIds.push(trainId);
 
-      if (isTrainInFuture(calls)) {
+      if (isTrainInFuture(calls) || isTrainInPast(calls)) {
         return {
           id: trainId,
           position: null,
