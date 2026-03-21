@@ -510,7 +510,7 @@ defineExpose<MapProtocol>({ svgRef });
         fill="#E3051B"
       />
       <rect
-        id="45102:1"
+        id="45102:1A"
         x="554"
         y="211"
         width="26"
@@ -528,7 +528,7 @@ defineExpose<MapProtocol>({ svgRef });
         fill="#E3051B"
       />
       <rect
-        id="43224:1_2"
+        id="58759:1"
         x="285"
         y="211"
         width="26"
@@ -564,7 +564,7 @@ defineExpose<MapProtocol>({ svgRef });
         fill="#E3051B"
       />
       <rect
-        id="45102:2"
+        id="45102:2A"
         x="554"
         y="267"
         width="26"
@@ -582,7 +582,7 @@ defineExpose<MapProtocol>({ svgRef });
         fill="#E3051B"
       />
       <rect
-        id="43224:2_2"
+        id="58759:2"
         x="285"
         y="267"
         width="26"
