@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, watch, type Ref } from "vue";
 import dayjs from "dayjs";
 import type { EstimatedCall, SiriResponse } from "../types/SiriResponse";
 import type {
@@ -172,6 +172,13 @@ function earliestCallFirst(a: EstimatedCall, b: EstimatedCall): number {
   return aTime.isBefore(bTime) ? -1 : aTime.isAfter(bTime) ? 1 : 0;
 }
 
+function getMiniId(trainId: string, mission: string): string {
+  if (/[a-z]{4}[0-9]{2}/gi.test(trainId)) {
+    return trainId.slice(0, 2) + trainId.slice(-2);
+  }
+  return mission;
+}
+
 function extractTrainsData(
   siriData: SiriResponse,
   lineId: string,
@@ -193,8 +200,13 @@ function extractTrainsData(
       return journey.LineRef.value.endsWith(lineId + ":");
       return journey.VehicleJourneyName.at(0)?.value === "QIKI84";
     })
-    .map(function (journey) {
-      const trainId = journey.VehicleJourneyName?.at(0)?.value ?? "UNKNOWN";
+    .map(function (journey): Omit<Train, "position"> & {
+      position: Train["position"] | null;
+    } {
+      const trainId =
+        journey.VehicleJourneyName?.at(0)?.value.replace("RATP", "") ??
+        "WQZZ99";
+      const mission = journey.JourneyNote?.at(0)?.value ?? "WQZZ";
       const calls =
         journey.EstimatedCalls?.EstimatedCall.sort(earliestCallFirst) ?? [];
 
@@ -203,7 +215,9 @@ function extractTrainsData(
       if (isTrainInFuture(calls) || isTrainInPast(calls)) {
         return {
           id: trainId,
+          miniId: getMiniId(trainId, mission),
           position: null,
+          delayed: false,
         };
       }
 
@@ -211,6 +225,7 @@ function extractTrainsData(
 
       return {
         id: trainId,
+        miniId: getMiniId(trainId, mission),
         delayed: [
           currentCall?.DepartureStatus?.toLocaleLowerCase(),
           currentCall?.ArrivalStatus?.toLocaleLowerCase(),
@@ -227,7 +242,7 @@ function extractTrainsData(
   return parsedTrains;
 }
 
-export function useRealtime(lineId: string) {
+export function useRealtime(lineId: Ref<string>) {
   const trains = ref<Train[]>([]);
   const trainHistory = new Map<string, Set<number>>();
   let intervalId: ReturnType<typeof setInterval>;
@@ -252,7 +267,7 @@ export function useRealtime(lineId: string) {
       }
 
       const data = (await response.json()) as SiriResponse;
-      trains.value = extractTrainsData(data, lineId, trainHistory);
+      trains.value = extractTrainsData(data, lineId.value, trainHistory);
     } catch (error) {
       console.error("Failed to fetch train data", error);
     }
@@ -266,6 +281,10 @@ export function useRealtime(lineId: string) {
   onUnmounted(function () {
     clearInterval(intervalId);
     trainHistory.clear();
+  });
+
+  watch(lineId, function () {
+    fetchTrains();
   });
 
   return { trains };

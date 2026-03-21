@@ -14,6 +14,7 @@ export interface TrainPositionBetweenStops {
 
 export interface Train {
   id: string;
+  miniId: string;
   position: TrainPositionAtStop | TrainPositionBetweenStops;
   delayed: boolean;
 }
@@ -36,4 +37,13 @@ export interface TransitLine {
   id: string;
   name: string;
   layout: RouteBlock[];
+}
+
+export interface MapProtocol {
+  svgRef: Ref<SVGElement | null>;
+}
+
+export interface MapDefinition {
+  component: DefineComponent<{}, {}, any>;
+  label: string;
 }

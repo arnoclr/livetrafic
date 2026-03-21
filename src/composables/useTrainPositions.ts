@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, type Ref } from "vue";
+import { computed, onMounted, ref, watch, type Ref } from "vue";
 import type { Train } from "../types/App";
 
 interface StopCoordinate {
@@ -10,7 +10,7 @@ interface StopCoordinate {
 
 export function useTrainPositions(
   trains: Ref<Train[]>,
-  svgRef: Ref<SVGElement | null>,
+  svgRef: Ref<SVGElement | null | undefined>,
 ) {
   const stopsCoordinates = ref<StopCoordinate[]>([]);
 
@@ -138,9 +138,7 @@ export function useTrainPositions(
 
   const positionedTrains = computed(computeTrainVisuals);
 
-  onMounted(function () {
-    extractStopsFromSvg();
-  });
+  watch(svgRef, extractStopsFromSvg, { immediate: true });
 
   return {
     positionedTrains,
