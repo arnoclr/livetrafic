@@ -1,5 +1,17 @@
-# Vue 3 + TypeScript + Vite
+# livetrafic
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+![Preview](preview.png)
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+To start, create a `.env` file a project root with the following content:
+
+```
+VITE_PRIM_API_KEY=xxxxxxxxxxxxxx
+```
+
+Get your token here https://prim.iledefrance-mobilites.fr/fr/mes-jetons-authentification
+
+Then, run `npm i`, `npm run dev` and go to http://localhost:5173
+
+# Goal
+
+The goal of this project is not to replicate a 1:1 version of official transport companies apps, but highlight the data offered by PRIM global API, to help debugging and see the quality of the data.
