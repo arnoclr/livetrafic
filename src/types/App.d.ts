@@ -1,3 +1,5 @@
+import type { Dayjs } from "dayjs";
+
 export interface TrainPositionAtStop {
   status: "atStop";
   stopId: number;
@@ -17,6 +19,7 @@ export interface Train {
   miniId: string;
   position: TrainPositionAtStop | TrainPositionBetweenStops;
   delayed: boolean;
+  times: Map<string, { arrival: Dayjs }>;
 }
 
 export interface Station {

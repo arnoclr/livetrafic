@@ -1,5 +1,5 @@
 import { ref, onMounted, onUnmounted, watch, type Ref } from "vue";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import type { EstimatedCall, SiriResponse } from "../types/SiriResponse";
 import type {
   Train,
@@ -218,6 +218,7 @@ function extractTrainsData(
           miniId: getMiniId(trainId, mission),
           position: null,
           delayed: false,
+          times: new Map<string, { arrival: Dayjs }>(),
         };
       }
 
@@ -231,6 +232,19 @@ function extractTrainsData(
           currentCall?.ArrivalStatus?.toLocaleLowerCase(),
         ].includes("delayed"),
         position: determinePosition(trainId, currentCall, historyMap),
+        times: calls.reduce(function (acc, call) {
+          const stopId = extractStopId(call.StopPointRef.value);
+          const platform =
+            call.ArrivalPlatformName?.value ||
+            call.DeparturePlatformName?.value;
+          const { arrivalTime } = getCallTimes(call);
+
+          if (arrivalTime) {
+            acc.set(`${stopId}:${platform}`, { arrival: arrivalTime });
+          }
+
+          return acc;
+        }, new Map<string, { arrival: Dayjs }>()),
       };
     })
     .filter(function (train): train is Train {

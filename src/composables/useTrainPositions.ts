@@ -1,5 +1,6 @@
 import { computed, onMounted, ref, watch, type Ref } from "vue";
 import type { Train } from "../types/App";
+import type { Dayjs } from "dayjs";
 
 interface StopCoordinate {
   id: number;
@@ -11,6 +12,7 @@ interface StopCoordinate {
 export function useTrainPositions(
   trains: Ref<Train[]>,
   svgRef: Ref<SVGElement | null | undefined>,
+  selectedTrain: Ref<Train | null | undefined>,
 ) {
   const stopsCoordinates = ref<StopCoordinate[]>([]);
 
@@ -138,9 +140,29 @@ export function useTrainPositions(
 
   const positionedTrains = computed(computeTrainVisuals);
 
+  const timeHints = computed<{ x: number; y: number; time: Dayjs }[]>(() => {
+    const train = selectedTrain.value;
+    if (!train) return [];
+    const hints: { x: number; y: number; time: Dayjs }[] = [];
+    train.times.forEach((time, stop) => {
+      const stopId = Number(stop.split(":").at(0));
+      const platform = stop.split(":").at(-1);
+      const position = getStop(stopId, platform);
+      if (position) {
+        hints.push({
+          x: position.x,
+          y: position.y,
+          time: time.arrival,
+        });
+      }
+    });
+    return hints;
+  });
+
   watch(svgRef, extractStopsFromSvg, { immediate: true });
 
   return {
     positionedTrains,
+    timeHints,
   };
 }
