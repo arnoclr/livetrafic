@@ -25,17 +25,15 @@ function getCallTimes(call: EstimatedCall) {
 function findCurrentCall(calls: EstimatedCall[]) {
   const now = dayjs();
 
-  for (let i = 0; i < calls.length; i++) {
-    const call = calls.at(i);
-    if (!call) continue;
+  for (const call of calls) {
+    if (!call) {
+      continue;
+    }
 
     const { departureTime, arrivalTime } = getCallTimes(call);
     const timeToCompare = departureTime || arrivalTime;
 
-    if (
-      timeToCompare &&
-      (now.isBefore(timeToCompare) || now.isSame(timeToCompare, "minute"))
-    ) {
+    if (timeToCompare && now.isBefore(timeToCompare)) {
       return call;
     }
   }
@@ -223,6 +221,11 @@ function extractTrainsData(
       }
 
       const currentCall = findCurrentCall(calls);
+      updateTrainHistory(
+        trainId,
+        extractStopId(calls.at(0)?.StopPointRef.value ?? "0"),
+        historyMap,
+      );
 
       return {
         id: trainId,
@@ -259,7 +262,9 @@ function extractTrainsData(
 export function useRealtime(lineId: Ref<string>) {
   const trains = ref<Train[]>([]);
   const trainHistory = new Map<string, Set<number>>();
-  let intervalId: ReturnType<typeof setInterval>;
+  const lastSiriData = ref<SiriResponse | null>(null);
+  let fetchInterval: ReturnType<typeof setInterval>;
+  let computeInterval: ReturnType<typeof setInterval>;
 
   async function fetchTrains() {
     try {
@@ -280,20 +285,33 @@ export function useRealtime(lineId: Ref<string>) {
         throw new Error("Network response was not ok");
       }
 
-      const data = (await response.json()) as SiriResponse;
-      trains.value = extractTrainsData(data, lineId.value, trainHistory);
+      lastSiriData.value = (await response.json()) as SiriResponse;
     } catch (error) {
       console.error("Failed to fetch train data", error);
     }
   }
 
+  async function computePositions() {
+    if (!lastSiriData.value) {
+      return;
+    }
+
+    trains.value = extractTrainsData(
+      lastSiriData.value,
+      lineId.value,
+      trainHistory,
+    );
+  }
+
   onMounted(function () {
     fetchTrains();
-    intervalId = setInterval(fetchTrains, 30_000);
+    fetchInterval = setInterval(fetchTrains, 30_000);
+    computeInterval = setInterval(computePositions, 5_000);
   });
 
   onUnmounted(function () {
-    clearInterval(intervalId);
+    clearInterval(fetchInterval);
+    clearInterval(computeInterval);
     trainHistory.clear();
   });
 
