@@ -46,19 +46,14 @@ function findCurrentCall(calls: EstimatedCall[]) {
 function updateTrainHistory(
   trainId: string,
   currentStopId: number,
-  isAtStop: boolean,
   historyMap: Map<string, Set<number>>,
 ) {
   const history = historyMap.get(trainId) || new Set();
 
-  if (isAtStop) {
-    history.add(currentStopId);
-    historyMap.set(trainId, history);
-  } else if (!historyMap.has(trainId)) {
-    historyMap.set(trainId, history);
-  }
+  history.add(currentStopId);
+  historyMap.set(trainId, history);
 
-  return [...(historyMap.get(trainId) || new Set())];
+  return [...history];
 }
 
 function determinePosition(
@@ -78,10 +73,10 @@ function determinePosition(
     ? now.isAfter(arrivalTime) || now.isSame(arrivalTime, "minute")
     : false;
 
-  const history = updateTrainHistory(trainId, stopId, isAtStop, historyMap);
+  const history = updateTrainHistory(trainId, stopId, historyMap);
 
   if (isAtStop) {
-    const previousStopId = history.length > 1 ? history.at(-2) : undefined;
+    const previousStopId = history.at(-2);
 
     return {
       status: "atStop",
@@ -90,7 +85,7 @@ function determinePosition(
     } as TrainPositionAtStop;
   }
 
-  const fromStopId = history.at(-1);
+  const fromStopId = history.at(-2);
 
   if (fromStopId !== undefined) {
     return {
@@ -217,14 +212,18 @@ export function useRealtime(lineId: string) {
 
   async function fetchTrains() {
     try {
+      const abortController = new AbortController();
+      const timer = setTimeout(() => abortController.abort(), 10_000);
       const response = await fetch(
         `/prim/marketplace/estimated-timetable/?LineRef=ALL`,
         {
           headers: {
             apiKey: import.meta.env.VITE_PRIM_API_KEY,
           },
+          signal: abortController.signal,
         },
       );
+      clearTimeout(timer);
 
       if (!response.ok) {
         throw new Error("Network response was not ok");
@@ -239,7 +238,7 @@ export function useRealtime(lineId: string) {
 
   onMounted(function () {
     fetchTrains();
-    intervalId = setInterval(fetchTrains, 20_000);
+    intervalId = setInterval(fetchTrains, 30_000);
   });
 
   onUnmounted(function () {
