@@ -1209,7 +1209,7 @@ defineExpose<MapProtocol>({ svgRef });
         fill="#E3051B"
       />
       <rect
-        id="470549:2_2"
+        id="470549:1"
         width="26"
         height="26"
         rx="13"
