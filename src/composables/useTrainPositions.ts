@@ -1,12 +1,40 @@
-import { computed, onMounted, ref, watch, type Ref } from "vue";
-import type { Train } from "../types/App";
 import type { Dayjs } from "dayjs";
+import { computed, ref, watch, type Ref } from "vue";
+import type { Train } from "../types/App";
 
 interface StopCoordinate {
   id: number;
   x: number;
   y: number;
   platform: string;
+}
+
+function parseMatrixString(matrixString: string) {
+  const match = matrixString ? matrixString.match(/matrix\(([^)]+)\)/) : null;
+
+  if (!match) {
+    return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+  }
+
+  const values = match.at(1)?.trim().split(/[ ,]+/) || [];
+
+  return {
+    a: parseFloat(values.at(0) ?? "1"),
+    b: parseFloat(values.at(1) ?? "0"),
+    c: parseFloat(values.at(2) ?? "0"),
+    d: parseFloat(values.at(3) ?? "1"),
+    e: parseFloat(values.at(4) ?? "0"),
+    f: parseFloat(values.at(5) ?? "0"),
+  };
+}
+
+function applySvgMatrix(matrixString: string, localX: number, localY: number) {
+  const matrix = parseMatrixString(matrixString);
+
+  return {
+    globalX: matrix.a * localX + matrix.c * localY + matrix.e,
+    globalY: matrix.b * localX + matrix.d * localY + matrix.f,
+  };
 }
 
 export function useTrainPositions(
@@ -40,12 +68,21 @@ export function useTrainPositions(
       const width = rawWidth ? parseFloat(rawWidth) : 26;
       const height = rawHeight ? parseFloat(rawHeight) : 26;
 
+      const localCenterX = x + width / 2;
+      const localCenterY = y + height / 2;
+
+      const { globalX, globalY } = applySvgMatrix(
+        rect.getAttribute("transform") || "",
+        localCenterX,
+        localCenterY,
+      );
+
       const idParts = id.split(":");
 
       extractedStops.push({
         id: parseInt(idParts.at(0) ?? "0"),
-        x: x + width / 2,
-        y: y + height / 2,
+        x: globalX,
+        y: globalY,
         platform: idParts.at(-1) ?? "",
       });
     });

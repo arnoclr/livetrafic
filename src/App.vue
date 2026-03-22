@@ -4,6 +4,7 @@ import { useRealtime } from "./composables/useRealtime";
 import { useTrainPositions } from "./composables/useTrainPositions";
 import type { SupportedLineId } from "./maps/registry";
 import { LINE_MAPS } from "./maps/registry";
+import type { Train } from "./types/App";
 
 const currentLine = ref<SupportedLineId>("C01742");
 const mapComponentRef =
@@ -28,6 +29,14 @@ const { positionedTrains, timeHints } = useTrainPositions(
   svgRef,
   selectedTrain,
 );
+
+function onTrainClick(train: Train) {
+  if (!openTrainInSNCFConnect.value) {
+    selectedTrainId.value =
+      selectedTrainId.value === train.id ? null : train.id;
+    console.log("train :", train);
+  }
+}
 </script>
 
 <template>
@@ -75,10 +84,7 @@ const { positionedTrains, timeHints } = useTrainPositions(
               ? `https://www.sncf-connect.com/home/search?userInput=${position.train.id}&destinationId=`
               : 'javascript:void(0)'
           "
-          @click="
-            selectedTrainId =
-              selectedTrainId === position.train.id ? null : position.train.id
-          "
+          @click="onTrainClick(position.train)"
           target="_blank"
           class="train"
           :class="{
