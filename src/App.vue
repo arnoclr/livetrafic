@@ -108,6 +108,7 @@ function onTrainClick(train: Train) {
         :style="{
           left: `${hint.x}px`,
           top: `${hint.y}px`,
+          color: hint.status === 'cancelled' ? 'red' : undefined,
         }"
       >
         {{ hint.time.format("HH:mm") }}

@@ -19,7 +19,7 @@ export interface Train {
   miniId: string;
   position: TrainPositionAtStop | TrainPositionBetweenStops;
   delayed: boolean;
-  times: Map<string, { arrival: Dayjs }>;
+  times: Map<string, { arrival: Dayjs; status: string | undefined }>;
 }
 
 export interface Station {

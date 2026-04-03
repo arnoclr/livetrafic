@@ -177,10 +177,17 @@ export function useTrainPositions(
 
   const positionedTrains = computed(computeTrainVisuals);
 
-  const timeHints = computed<{ x: number; y: number; time: Dayjs }[]>(() => {
+  const timeHints = computed<
+    { x: number; y: number; time: Dayjs; status: string | undefined }[]
+  >(() => {
     const train = selectedTrain.value;
     if (!train) return [];
-    const hints: { x: number; y: number; time: Dayjs }[] = [];
+    const hints: {
+      x: number;
+      y: number;
+      time: Dayjs;
+      status: string | undefined;
+    }[] = [];
     train.times.forEach((time, stop) => {
       const stopId = Number(stop.split(":").at(0));
       const platform = stop.split(":").at(-1);
@@ -190,6 +197,7 @@ export function useTrainPositions(
           x: position.x,
           y: position.y,
           time: time.arrival,
+          status: time.status,
         });
       }
     });

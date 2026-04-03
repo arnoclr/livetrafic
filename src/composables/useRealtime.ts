@@ -243,11 +243,16 @@ function extractTrainsData(
           const { arrivalTime } = getCallTimes(call);
 
           if (arrivalTime) {
-            acc.set(`${stopId}:${platform}`, { arrival: arrivalTime });
+            acc.set(`${stopId}:${platform}`, {
+              arrival: arrivalTime,
+              status:
+                call?.ArrivalStatus?.toLocaleLowerCase() ??
+                call.DepartureStatus?.toLocaleLowerCase(),
+            });
           }
 
           return acc;
-        }, new Map<string, { arrival: Dayjs }>()),
+        }, new Map<string, { arrival: Dayjs; status: string | undefined }>()),
       };
     })
     .filter(function (train): train is Train {
